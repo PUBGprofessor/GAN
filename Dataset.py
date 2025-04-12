@@ -13,10 +13,11 @@ class Dataset():
         self.device = device
     
     def __len__(self):
-        return self.x_train.shape[0] * 2
+        return self.x_train.shape[0]
     
     def __getitem__(self, index):
-        if index < self.x_train.shape[0]:
-            return self.x_train[index], torch.tensor(1.0, device=self.device)
-        else:
-            return self.G.getImage("test"), torch.tensor(0.0, device=self.device)
+        # if index < self.x_train.shape[0]:
+        #     return self.x_train[index], torch.tensor(1.0, device=self.device)
+        # else:
+        #     return self.G.getImage("test"), torch.tensor(0.0, device=self.device)
+        return self.x_train[index], torch.tensor(1.0, device=self.device)

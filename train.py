@@ -16,8 +16,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 G = G().to(device)
 D = D().to(device)
 
+# def lossG(y1):
+#     return torch.sum(1 - y1**2) / y1.shape[0]
+
 def lossG(y1):
-    return torch.sum(1 - y1**2) / y1.shape[0]
+    return torch.sum(- torch.log(y1)) / y1.shape[0]
 
 def lossD(y1, y2):
     y2 = y2.view(-1, 1)
@@ -32,7 +35,7 @@ Goptimer = optim.Adam(G.parameters(), 0.0005)
 Doptimer = optim.Adam(D.parameters(), 0.005)
 
 # for i in datasetLoader:
-#     print(lossG(D.predict(i[0])))
+#     print(D.predict(G.getImage("test")))
 #     break
 
 epoch = 100
@@ -43,8 +46,10 @@ for j in range(epoch):
         Doptimer.zero_grad()
 
         # 训练D
-        y = D.predict(i[0])
+        y = D.predict(i[0]) # 真标签
         loss1 = lossD(y, i[1])
+        y = D.predict(G.getImage("test", batch)) # 假标签
+        loss1 += lossD(y, torch.zeros([batch, 1], device=device))
         loss1.backward()
         Doptimer.step()
         Doptimer.zero_grad()
@@ -52,7 +57,7 @@ for j in range(epoch):
         # 训练G
         for j in range(200):
             Goptimer.zero_grad()
-            x = G.getImage("train", batch)
+            x = G.getImage("train", batch * 2)
             y = D.predict(x)
             loss2 = lossG(y)
             loss2.backward()
