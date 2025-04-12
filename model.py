@@ -8,19 +8,22 @@ class D(nn.Module):
         # Convention kernel 1：1->6 5x5
         self.Conv1 = nn.Conv2d(1, 6, 5)
         # Convention kernel 2：6->16 5x5
-        self.Conv2 = nn.Conv2d(6, 16, 5)
+        self.Conv2 = nn.Conv2d(6, 4, 5)
 
-        self.fc1 = nn.Linear(16*4*4, 64)
-        self.fc2 = nn.Linear(64, 1)
+        # self.fc1 = nn.Linear(16*4*4, 64)
+        self.fc1 = nn.Linear(4*4*4, 1)
+        # self.fc2 = nn.Linear(64, 1)
 
     def forward(self, x):
+        # 输入x:(batch_size, 1, 28, 28)
         batch =x.size()[0]
         x = F.max_pool2d(F.relu(self.Conv1(x)), (2,2))
         x = F.max_pool2d(F.relu(self.Conv2(x)), (2,2))
         x = x.view(batch, -1)
-        x = F.relu(self.fc1(x))
+        # x = F.relu(self.fc1(x))
 
-        return self.fc2(x)
+        return self.fc1(x)
+        # return self.fc2(x)
 
     def predict(self, x):
         y = self.forward(x)
@@ -102,17 +105,23 @@ class D(nn.Module):
 #         return y
 
 class G(nn.Module):
-    def __init__(self, input_size=32):
+    def __init__(self, input_size=128):
         super().__init__()
+        self.input_size = input_size
         self.fc1 = nn.Linear(input_size, 128)
         self.BN1 = nn.BatchNorm1d(128)
 
         self.fc2 = nn.Linear(128, 29 * 29 * 2 * 2)
         self.BN2 = nn.BatchNorm1d(29 * 29 * 2 * 2)
 
-        self.Conv1 = nn.Conv2d(1, 1, 3)
-        self.BN3 = nn.BatchNorm2d(1)
+        # self.Conv1 = nn.Conv2d(1, 1, 3)
+        # self.BN3 = nn.BatchNorm2d(1)
 
+        self.fc3 = nn.Linear(29 * 29 * 2 * 2, 3 * 28 * 28)
+        self.BN3 = nn.BatchNorm1d(3 * 28 * 28)
+
+        self.fc4 = nn.Linear(3 * 28 * 28, 1 * 28 * 28)
+        self.BN4 = nn.BatchNorm1d(1 * 28 * 28)
 
     def forward(self, x):
         # 输入x:(batch_size, 32)
@@ -121,12 +130,15 @@ class G(nn.Module):
 
         x = F.relu(self.BN2(self.fc2(x)))
         # x ：(batch_size, 29 * 29 * 2 * 2)
-        x = x.view(batch, 1, 29 * 2, 29 * 2)
+        # x = x.view(batch, 1, 29 * 2, 29 * 2)
 
-        x = F.relu(self.BN3(self.Conv1(x))) # (batch, 1, 28 * 2, 28 * 2)
-        x = F.max_pool2d(x, (2, 2))
+        # x = F.relu(self.BN3(self.Conv1(x))) # (batch, 1, 28 * 2, 28 * 2)
+        # x = F.max_pool2d(x, (2, 2))
+        x = F.relu(self.BN3(self.fc3(x)))
+        x = F.relu(self.BN4(self.fc4(x)))
+        x = x.view(batch, 1, 28, 28)
 
-        return torch.sigmoid(x)
+        return torch.sigmoid(x) # 图片大小为(1, 28, 28) 取值范围[0, 1]
 
     def getImage(self, s, batch_size=1):
         if s not in ["train", "test"]:
@@ -143,7 +155,7 @@ class G(nn.Module):
         else:
             self.eval()
 
-        x = torch.randn(batch_size, 32).to(next(self.parameters()).device)
+        x = torch.randn(batch_size, self.input_size).to(next(self.parameters()).device)
 
         y = self.forward(x)
         
