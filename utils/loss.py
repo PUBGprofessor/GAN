@@ -16,4 +16,5 @@ def lossG(y1, y2):
 #     return criterion(y1, y2)  # 使用 BCEWithLogitsLoss 计算损失
 
 def lossD(y1, y2):
+    y2 = y2.view(-1, 1)
     return criterion(y1, y2)
