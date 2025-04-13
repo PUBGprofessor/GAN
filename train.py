@@ -72,7 +72,7 @@ for j in range(config.load_epoch, epoch):
         Goptimer.zero_grad()
         Doptimer.zero_grad()
 
-        real_label = (1 - torch.rand(config.batchSize, 1)/10).to(device)
+        real_label = (1 - torch.rand(config.batch_size, 1)/10).to(device)
         # 训练D
         if j > config.epoch / 2 or torch.rand(1).item() > config.change_label * (config.epoch - j) / config.epoch: # 随迭代次数下调交换概率
             # 不交换标签
