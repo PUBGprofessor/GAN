@@ -77,7 +77,7 @@ for j in range(config.load_epoch, epoch):
         if j > config.epoch / 2 or torch.rand(1).item() > config.change_label * (config.epoch - j) / config.epoch: # 随迭代次数下调交换概率
             # 不交换标签
             y = D.predict(i[0])
-            loss1 = lossD(y, i[1] * real_label) # 0.9 ~ 1假标签
+            loss1 = lossD(y, real_label) # 0.9 ~ 1假标签
             y = D.predict(G.getImage("test", batch)) 
             y2 = torch.full([batch, 1], 0, device=device)
         else: # 交换标签
