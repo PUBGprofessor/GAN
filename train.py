@@ -99,10 +99,10 @@ for j in range(config.load_epoch, epoch):
         print('epoch: {} D_loss: {} loss2: {}'.format(j+1, D_loss, loss2))
         print("####################################")
         # 每个epoch结束后保存模型
-        model_path_G = os.path.join(save_dir, f'G_epoch_{config.D_model}_{j+1}.pth')
+        model_path_G = os.path.join(save_dir, f'G_epoch_{config.G_model}_{j+1}.pth')
         torch.save(G.state_dict(), model_path_G)
         if (j+1) % 5 == 0:
-            model_path_D = os.path.join(save_dir, f'D_epoch_{config.G_model}_{j+1}.pth')
+            model_path_D = os.path.join(save_dir, f'D_epoch_{config.D_model}_{j+1}.pth')
             torch.save(D.state_dict(), model_path_D)
 
         Imgs = G.getImage("test", batch_size=config.batch_size)

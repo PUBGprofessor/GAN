@@ -6,13 +6,16 @@ class D(nn.Module):
     def __init__(self):
         super(D, self).__init__()
         self.Conv1 = nn.Conv2d(1, 6, 5)
-        self.Conv2 = nn.Conv2d(6, 4, 5)
+        self.Conv2 = nn.Conv2d(6, 16, 5)
         
         # Dropout 层
         self.dropout1 = nn.Dropout(0.3)
         self.dropout2 = nn.Dropout(0.3)
+        self.dropout3 = nn.Dropout(0.3)
 
-        self.fc1 = nn.Linear(4 * 4 * 4, 1)
+        self.fc1 = nn.Linear(16 * 4 * 4, 512)
+        self.fc2 = nn.Linear(512, 128)
+        self.fc3 = nn.Linear(128, 1)
 
     def forward(self, x):
         batch = x.size()[0]
@@ -25,7 +28,14 @@ class D(nn.Module):
         x = self.dropout2(x)
 
         x = x.view(batch, -1)
-        return self.fc1(x)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.dropout3(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        x = self.fc3(x)
+        
+        return x
 
     def predict(self, x, s="test"):
         if s not in ["train", "test"]:
