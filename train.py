@@ -1,19 +1,19 @@
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from model.G_linear import G
-from model.D import D
+from utils.model_utils import get_G_model, get_D_model
 from Dataset import *
 import os
-
+from utils.loss import lossD, lossG
 class config:
     batch_size = 128
     epoch = 50
-    version = "v4.0"
+    version = "v5.0"
     # fake_label = 0.95 # 假标签
     # real_label = 0.05 # 假标签
     change_label = 0.1 # 交换标签的概率
-
+    G_model = "G_linear_CSDN"
+    D_model = "D_CSDN"
     load_epoch = 0
     G_load_path = os.path.join('./saved_models', version, f'G_epoch_{load_epoch}.pth')
     D_load_path = os.path.join('./saved_models', version, f'D_epoch_{load_epoch}.pth')
@@ -25,36 +25,16 @@ if not os.path.exists(save_dir):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-G = G().to(device)
-D = D().to(device)
+# 根据配置加载模型
+G = get_G_model(config.G_model, device, bool(config.load_epoch), config.G_load_path)
+D = get_D_model(config.D_model, device, bool(config.load_epoch), config.D_load_path)
 
-if config.load_epoch != 0 and os.path.exists(config.G_load_path):
-    G.load_state_dict(torch.load(config.G_load_path, weights_only=True))
-    D.load_state_dict(torch.load(config.D_load_path, weights_only=True))
 G.train()
 D.train()
-# def lossG(y1):
-#     return torch.sum(1 - y1**2) / y1.shape[0]
-# def lossG(y1):
-#     return -torch.mean(torch.log(y1 + 1e-6))  # 防止 log(0)
-
-criterion = torch.nn.BCELoss()
-def lossG(y1):
-    y2 = torch.full([y1.shape[0], 1], 1.0, device=device) # 0.95假标签
-    return criterion(y1, y2)
-
-# criterion = torch.nn.BCEWithLogitsLoss()
-# def lossG(y1):
-#     # y1 = y1.view(-1, 1)
-#     y2 = torch.full([y1.shape[0], 1], 0.95, device=device) # 0.95假标签
-#     return criterion(y1, y2)  # 使用 BCEWithLogitsLoss 计算损失
-
-def lossD(y1, y2):
-    y2 = y2.view(-1, 1)
-    return criterion(y1, y2)
 
 batch = config.batch_size # 256
-dataset = Dataset(G, device)
+
+dataset = Dataset(device)
 datasetLoader = DataLoader(dataset, batch_size=batch, shuffle=True)
 
 
@@ -98,7 +78,8 @@ for j in range(config.load_epoch, epoch):
             x = G.getImage("train", batch)
             y = D.predict(x, "train")
             # y = D(x)
-            loss2 = lossG(y)
+            y2 = torch.full([y.shape[0], 1], 1.0, device=device)
+            loss2 = lossG(y, y2)
             Goptimer.zero_grad()
             loss2.backward()
             Goptimer.step()

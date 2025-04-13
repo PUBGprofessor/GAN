@@ -7,9 +7,8 @@ def get_data():
     return x_train, t_train, x_test, t_test
 
 class Dataset():
-    def __init__(self, G, device):
+    def __init__(self, device):
         self.x_train = torch.tensor(get_data()[0], device=device)
-        self.G = G
         self.device = device
     
     def __len__(self):
