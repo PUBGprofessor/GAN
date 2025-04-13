@@ -5,6 +5,7 @@ import torch
 #     return -torch.mean(torch.log(y1 + 1e-6))  # 防止 log(0)
 
 criterion = torch.nn.BCELoss()
+
 def lossG(y1, y2):
     return criterion(y1, y2)
 
@@ -15,5 +16,4 @@ def lossG(y1, y2):
 #     return criterion(y1, y2)  # 使用 BCEWithLogitsLoss 计算损失
 
 def lossD(y1, y2):
-    y2 = y2.view(-1, 1)
     return criterion(y1, y2)
