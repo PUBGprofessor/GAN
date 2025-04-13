@@ -5,29 +5,50 @@ import torch.nn.functional as F
 class D(nn.Module):
     def __init__(self):
         super(D, self).__init__()
-        # Convention kernel 1：1->6 5x5
         self.Conv1 = nn.Conv2d(1, 6, 5)
-        # Convention kernel 2：6->16 5x5
         self.Conv2 = nn.Conv2d(6, 4, 5)
+        
+        # Dropout 层
+        self.dropout1 = nn.Dropout(0.3)
+        self.dropout2 = nn.Dropout(0.3)
 
-        # self.fc1 = nn.Linear(16*4*4, 64)
-        self.fc1 = nn.Linear(4*4*4, 1)
-        # self.fc2 = nn.Linear(64, 1)
+        self.fc1 = nn.Linear(4 * 4 * 4, 1)
 
     def forward(self, x):
-        # 输入x:(batch_size, 1, 28, 28)
-        batch =x.size()[0]
-        x = F.max_pool2d(F.relu(self.Conv1(x)), (2,2))
-        x = F.max_pool2d(F.relu(self.Conv2(x)), (2,2))
+        batch = x.size()[0]
+        x = F.relu(self.Conv1(x))
+        x = F.max_pool2d(x, (2, 2))
+        x = self.dropout1(x)
+
+        x = F.relu(self.Conv2(x))
+        x = F.max_pool2d(x, (2, 2))
+        x = self.dropout2(x)
+
         x = x.view(batch, -1)
-        # x = F.relu(self.fc1(x))
-
         return self.fc1(x)
-        # return self.fc2(x)
 
-    def predict(self, x):
+    def predict(self, x, s="test"):
+        if s not in ["train", "test"]:
+            raise ValueError("getImage:trian or test")
+        
+        # 记录原状态
+        if self.training:
+            preState = True
+        else:
+            preState = False
+        
+        if s == "train":
+            self.train()
+        else:
+            self.eval()
         y = self.forward(x)
-        return F.sigmoid(y)
+
+        # 回归原状态
+        if preState == True:
+            self.train()
+        else:
+            self.eval()
+        return torch.sigmoid(y)
 
     def accuracy(self, x, t):
         y = self.predict(x)

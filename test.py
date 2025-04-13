@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 class config:
     batch_size = 64
     epoch = 50
-    version = "v3.2_"
+    version = "v4.0"
     fake_label = 0.95 # 假标签
     real_label = 0.05 # 假标签
     change_label = 0.2 # 交换标签的概率

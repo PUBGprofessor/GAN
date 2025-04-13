@@ -40,7 +40,7 @@ D.train()
 
 criterion = torch.nn.BCELoss()
 def lossG(y1):
-    y2 = torch.full([y1.shape[0], 1], 1, device=device) # 0.95假标签
+    y2 = torch.full([y1.shape[0], 1], 1.0, device=device) # 0.95假标签
     return criterion(y1, y2)
 
 # criterion = torch.nn.BCEWithLogitsLoss()
@@ -69,6 +69,8 @@ epoch = config.epoch
 
 for j in range(config.load_epoch, epoch):
     for idx, i in enumerate(datasetLoader):
+        if i[0].shape[0] != config.batch_size: # 样本不足则跳过
+            continue
         Goptimer.zero_grad()
         Doptimer.zero_grad()
 
@@ -76,14 +78,14 @@ for j in range(config.load_epoch, epoch):
         # 训练D
         if j > config.epoch / 2 or torch.rand(1).item() > config.change_label * (config.epoch - j) / config.epoch: # 随迭代次数下调交换概率
             # 不交换标签
-            y = D.predict(i[0])
+            y = D.predict(i[0], "train")
             loss1 = lossD(y, real_label) # 0.9 ~ 1假标签
-            y = D.predict(G.getImage("test", batch)) 
-            y2 = torch.full([batch, 1], 0, device=device)
+            y = D.predict(G.getImage("test", batch), "train") 
+            y2 = torch.full([batch, 1], 0.0, device=device)
         else: # 交换标签
-            y = D.predict(i[0])
-            loss1 = lossD(y, i[1] * 0)
-            y = D.predict(G.getImage("test", batch))
+            y = D.predict(i[0], "train")
+            loss1 = lossD(y, i[1] * 0.0)
+            y = D.predict(G.getImage("test", batch), "train")
             y2 = real_label
         loss1 += lossD(y, y2)
         loss1 = loss1 / 2
@@ -94,7 +96,7 @@ for j in range(config.load_epoch, epoch):
         # 训练G
         for g_step in range(1):
             x = G.getImage("train", batch)
-            y = D.predict(x)
+            y = D.predict(x, "train")
             # y = D(x)
             loss2 = lossG(y)
             Goptimer.zero_grad()
@@ -105,7 +107,7 @@ for j in range(config.load_epoch, epoch):
 
     with torch.no_grad():
         print("####################################")
-        print('epoch: {} loss1: {} loss2: {}'.format(j, loss1, loss2))
+        print('epoch: {} loss1: {} loss2: {}'.format(j+1, loss1, loss2))
         print("####################################")
         # 每个epoch结束后保存模型
         if (j+1) % 5 == 0:
