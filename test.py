@@ -1,4 +1,5 @@
-from model import *
+from model.G_linear import *
+from model.D import D
 import os
 import torch
 from torchvision.utils import save_image
@@ -6,9 +7,12 @@ from Dataset import *
 from torch.utils.data import DataLoader
 
 class config:
-    batch_size = 5
-    epoch = 5
-    version = "v3.1"
+    batch_size = 64
+    epoch = 50
+    version = "v3.2_"
+    fake_label = 0.95 # 假标签
+    real_label = 0.05 # 假标签
+    change_label = 0.2 # 交换标签的概率
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 G = G().to(device)
